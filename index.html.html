@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban · Lançamento Ingresso</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f4f0;--bg2:#ffffff;--bg3:#eceae3;--bd:#dddad0;--bd2:#ccc9be;
+  --tx:#111110;--mu:#7a7870;--mu2:#b0ada4;
+  --s0:#9b9790;--s1:#2563eb;--s2:#d97706;--s3:#dc2626;--s4:#059669;--s5:#7c3aed;
+  --p1:#dc2626;--p2:#d97706;--p3:#2563eb;--p4:#059669;
+  --a-copy:#7c3aed;--a-grav:#e11d48;--a-edit:#ea580c;
+  --a-pag:#0891b2;--a-auto:#0d9488;--a-traf:#2563eb;
+  --a-sdr:#16a34a;--a-conf:#6d28d9;--a-cria:#db2777;--a-ger:#78716c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+
+/* HEADER */
+.hd{background:var(--tx);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:400;gap:12px;}
+.hd-l h1{font-size:14px;font-weight:700;color:#f5f4f0;letter-spacing:-.2px;}
+.hd-l p{font-size:10px;color:#6b6962;margin-top:1px;}
+.hd-stats{display:flex;}
+.hs{padding:0 14px;text-align:center;border-left:1px solid rgba(255,255,255,.07);}
+.hs-n{font-size:17px;font-weight:700;color:#f5f4f0;line-height:1;}
+.hs-l{font-size:9px;color:#6b6962;text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
+.gp-strip{background:var(--tx);padding:0 24px 10px;}
+.gp-row{display:flex;justify-content:space-between;font-size:9px;color:#6b6962;margin-bottom:3px;font-family:'DM Mono',monospace;}
+.gp-bar{height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+.gp-fill{height:100%;background:#f5f4f0;border-radius:2px;transition:width .5s;}
+
+/* FUNIL BANNER */
+.funil{background:var(--bg2);border-bottom:1px solid var(--bd);padding:10px 24px;overflow-x:auto;scrollbar-width:none;}
+.funil::-webkit-scrollbar{display:none;}
+.funil-inner{display:flex;align-items:center;gap:0;min-width:max-content;}
+.fs{display:flex;flex-direction:column;align-items:center;padding:6px 14px;cursor:default;}
+.fs-icon{font-size:16px;margin-bottom:2px;}
+.fs-label{font-size:9px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.fs-arrow{font-size:14px;color:var(--bd2);padding:0 2px;align-self:center;}
+.fs.active .fs-label{color:var(--tx);}
+.fs-dot{width:5px;height:5px;border-radius:50%;margin-top:3px;}
+
+/* AREA TABS */
+.atabs{background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;overflow-x:auto;scrollbar-width:none;padding:0 24px;position:sticky;top:57px;z-index:300;}
+.atabs::-webkit-scrollbar{display:none;}
+.atab{font-size:11px;font-weight:600;padding:10px 14px;border:none;background:transparent;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-1px;transition:all .12s;}
+.atab:hover{color:var(--tx);}
+.atab.on{color:var(--tx);border-bottom-color:var(--tx);}
+.atab .ac{background:var(--bg3);color:var(--mu);font-size:9px;padding:1px 5px;border-radius:8px;}
+.atab.on .ac{background:var(--tx);color:var(--bg2);}
+
+/* TOOLBAR */
+.tbar{padding:8px 24px;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.fgrp{display:flex;gap:3px;flex-wrap:wrap;}
+.fb{font-family:'Bricolage Grotesque',sans-serif;font-size:10px;font-weight:500;padding:3px 9px;border-radius:5px;border:1px solid var(--bd);background:var(--bg2);color:var(--mu);cursor:pointer;transition:all .1s;}
+.fb:hover{border-color:var(--tx);color:var(--tx);}
+.fb.on{background:var(--tx);border-color:var(--tx);color:var(--bg2);}
+.add-btn{font-family:'Bricolage Grotesque',sans-serif;font-size:10px;font-weight:700;padding:5px 12px;border-radius:5px;border:none;background:var(--tx);color:var(--bg2);cursor:pointer;white-space:nowrap;}
+.add-btn:hover{opacity:.8;}
+
+/* LEGEND */
+.leg{padding:6px 24px;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.li{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--mu);}
+.ld{width:7px;height:7px;border-radius:2px;}
+.leg-div{width:1px;height:14px;background:var(--bd);margin:0 4px;}
+
+/* BOARD */
+.bwrap{padding:16px 24px 40px;overflow-x:auto;}
+.board{display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:8px;min-width:max-content;}
+
+/* COLUMN */
+.col{border-radius:10px;border:1px solid var(--bd);overflow:hidden;display:flex;flex-direction:column;}
+.col-hd{padding:9px 11px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd);}
+.col-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.col-cnt{font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;}
+.col-body{padding:7px;display:flex;flex-direction:column;gap:5px;min-height:50px;}
+.col-empty{font-size:10px;color:var(--bd2);text-align:center;padding:18px 8px;font-style:italic;}
+
+/* col themes */
+.c-bl{background:#f8f9ff;} .c-bl .col-hd{background:#e8eeff;} .c-bl .col-lbl{color:var(--s0);} .c-bl .col-cnt{background:#dde3f5;color:var(--s0);}
+.c-pr{background:#eff6ff;} .c-pr .col-hd{background:#dbeafe;} .c-pr .col-lbl{color:var(--s1);} .c-pr .col-cnt{background:#bfdbfe;color:var(--s1);}
+.c-rv{background:#fffbeb;} .c-rv .col-hd{background:#fef3c7;} .c-rv .col-lbl{color:var(--s2);} .c-rv .col-cnt{background:#fde68a;color:var(--s2);}
+.c-rp{background:#fff5f5;} .c-rp .col-hd{background:#fee2e2;} .c-rp .col-lbl{color:var(--s3);} .c-rp .col-cnt{background:#fecaca;color:var(--s3);}
+.c-ap{background:#f0fdf4;} .c-ap .col-hd{background:#dcfce7;} .c-ap .col-lbl{color:var(--s4);} .c-ap .col-cnt{background:#bbf7d0;color:var(--s4);}
+.c-fn{background:#faf5ff;} .c-fn .col-hd{background:#ede9fe;} .c-fn .col-lbl{color:var(--s5);} .c-fn .col-cnt{background:#ddd6fe;color:var(--s5);}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:7px;overflow:hidden;cursor:pointer;transition:box-shadow .12s,border-color .12s;position:relative;}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06);border-color:var(--bd2);}
+.card-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
+.card-top{padding:9px 9px 9px 12px;}
+.card-r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.ptag{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;font-family:'DM Mono',monospace;}
+.pt1{background:#fee2e2;color:var(--p1);}
+.pt2{background:#fef3c7;color:var(--p2);}
+.pt3{background:#dbeafe;color:var(--p3);}
+.pt4{background:#dcfce7;color:var(--p4);}
+.cbtn{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;flex-shrink:0;}
+.cbtn:hover{border-color:var(--s4);}
+.cbtn.ck{background:var(--s4);border-color:var(--s4);}
+.cbtn svg{display:none;}
+.cbtn.ck svg{display:block;}
+.card-title{font-size:11px;font-weight:600;color:var(--tx);line-height:1.35;margin-bottom:6px;}
+.card.done .card-title{text-decoration:line-through;color:var(--mu);}
+.card-ft{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.av-wrap{display:flex;align-items:center;gap:4px;}
+.av{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;flex-shrink:0;}
+.av-v{background:#ede9fe;color:#5b21b6;}
+.av-r{background:#f3e8ff;color:#7e22ce;}
+.av-w{background:#dbeafe;color:#1e40af;}
+.av-h{background:#fee2e2;color:#991b1b;}
+.av-m{background:#dcfce7;color:#14532d;}
+.av-t{background:#f5f4f0;color:#7a7870;}
+.av-nm{font-size:9px;color:var(--mu);}
+.card-hora{font-size:9px;color:var(--mu);font-family:'DM Mono',monospace;}
+.dep-tag{font-size:8px;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-block;font-family:'DM Mono',monospace;}
+
+/* DETAIL */
+.det{display:none;border-top:1px solid var(--bd);padding:9px 11px;background:#fafaf8;}
+.card.open .det{display:block;}
+.dl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:3px;margin-top:9px;}
+.dl:first-child{margin-top:0;}
+.dt{font-size:10px;color:var(--tx);line-height:1.55;}
+.chklist{list-style:none;}
+.chklist li{font-size:10px;color:var(--tx);padding:2px 0 2px 14px;position:relative;line-height:1.4;}
+.chklist li::before{content:"□";position:absolute;left:0;color:var(--bd2);font-size:10px;}
+.crit-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:7px 9px;font-size:10px;color:#166534;line-height:1.5;}
+.dep-box{background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:7px 9px;font-size:10px;color:#92400e;line-height:1.5;}
+.flow{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-top:3px;}
+.fl-s{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'DM Mono',monospace;}
+.fl-cur{box-shadow:0 0 0 1.5px var(--tx);}
+.fl-0{background:#e4e2dc;color:var(--s0);}
+.fl-1{background:#bfdbfe;color:var(--s1);}
+.fl-2{background:#fde68a;color:var(--s2);}
+.fl-3{background:#fecaca;color:var(--s3);}
+.fl-4{background:#bbf7d0;color:var(--s4);}
+.fl-5{background:#ddd6fe;color:var(--s5);}
+.fl-arr{font-size:8px;color:var(--bd2);}
+.act-row{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap;}
+.act{font-family:'Bricolage Grotesque',sans-serif;font-size:9px;font-weight:600;padding:4px 9px;border-radius:5px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);cursor:pointer;transition:all .1s;}
+.act:hover{background:var(--tx);color:var(--bg2);}
+.act.adv{background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
+.act.adv:hover{background:#059669;color:white;border-color:#059669;}
+.act.rep{background:#fef2f2;border-color:#fecaca;color:#991b1b;}
+.act.rep:hover{background:#dc2626;color:white;border-color:#dc2626;}
+
+/* FUNIL VIEW */
+.funil-view{display:none;padding:20px 24px 40px;}
+.funil-view.on{display:block;}
+.fv-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.fv-sub{font-size:12px;color:var(--mu);margin-bottom:24px;}
+.fv-steps{display:flex;flex-direction:column;gap:12px;}
+.fv-step{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;}
+.fv-step-hd{padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;}
+.fv-num{width:28px;height:28px;border-radius:7px;background:var(--tx);color:var(--bg2);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fv-step-info{flex:1;}
+.fv-step-title{font-size:13px;font-weight:600;}
+.fv-step-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+.fv-step-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.fv-tag{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;}
+.fv-step-body{display:none;border-top:1px solid var(--bd);padding:14px 16px;}
+.fv-step.open .fv-step-body{display:block;}
+.fv-dep{font-size:11px;color:var(--tx);margin-bottom:8px;}
+.fv-dep strong{font-weight:600;}
+.fv-tasks{display:flex;flex-direction:column;gap:5px;}
+.fv-task-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--bd);font-size:11px;}
+.fv-task-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.fv-task-name{flex:1;font-weight:500;}
+.fv-task-who{font-size:9px;color:var(--mu);}
+.fv-task-status{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:600;}
+
+/* MODAL */
+.mov{display:none;position:fixed;inset:0;background:rgba(17,17,16,.5);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.mov.on{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:22px;position:relative;}
+.mx{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:5px;border:1px solid var(--bd);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--mu);font-family:'Bricolage Grotesque',sans-serif;}
+.mx:hover{background:var(--tx);color:var(--bg2);}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:3px;}
+.modal p{font-size:11px;color:var(--mu);margin-bottom:16px;}
+.fl2{margin-bottom:10px;}
+.fl2-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin-bottom:3px;}
+.fi,.fsel,.fta{width:100%;font-family:'Bricolage Grotesque',sans-serif;font-size:11px;padding:7px 9px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);outline:none;transition:border-color .1s;}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--tx);}
+.fta{resize:vertical;min-height:60px;line-height:1.5;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.msub{width:100%;font-family:'Bricolage Grotesque',sans-serif;font-size:11px;font-weight:700;padding:9px;border-radius:7px;border:none;background:var(--tx);color:var(--bg2);cursor:pointer;margin-top:3px;}
+.msub:hover{opacity:.85;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-l"><h1>Kanban · Lançamento Ingresso — Live Semanal</h1><p>Funil evergreen · Meta: 15 clientes · Tudo por fazer</p></div>
+  <div class="hd-stats">
+    <div class="hs"><div class="hs-n" id="hs-t">0</div><div class="hs-l">Tarefas</div></div>
+    <div class="hs"><div class="hs-n" id="hs-d">0</div><div class="hs-l">Feitas</div></div>
+    <div class="hs"><div class="hs-n" id="hs-p">0%</div><div class="hs-l">Progresso</div></div>
+    <div class="hs"><div class="hs-n" id="hs-b" style="color:#f87171">0</div><div class="hs-l">Bloqueadas</div></div>
+  </div>
+</div>
+<div class="gp-strip">
+  <div class="gp-row"><span>PROGRESSO GERAL DO LANÇAMENTO</span><span id="gp-l">0%</span></div>
+  <div class="gp-bar"><div class="gp-fill" id="gp-f" style="width:0%"></div></div>
+</div>
+
+<!-- FUNIL MAP -->
+<div class="funil">
+  <div class="funil-inner">
+    <div class="fs"><div class="fs-icon">📢</div><div class="fs-label">Ads</div><div class="fs-dot" style="background:var(--a-traf)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">📺</div><div class="fs-label">Webinário</div><div class="fs-dot" style="background:var(--a-grav)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">🌐</div><div class="fs-label">Pág. Vendas</div><div class="fs-dot" style="background:var(--a-pag)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">💳</div><div class="fs-label">Checkout</div><div class="fs-dot" style="background:var(--a-conf)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">✅</div><div class="fs-label">Pág. Obrigado</div><div class="fs-dot" style="background:var(--a-pag)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">💬</div><div class="fs-label">Grupo WA</div><div class="fs-dot" style="background:var(--a-auto)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">📱</div><div class="fs-label">WA X1</div><div class="fs-dot" style="background:var(--a-auto)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">🎓</div><div class="fs-label">Área Membros</div><div class="fs-dot" style="background:var(--a-conf)"></div></div>
+    <span class="fs-arrow">→</span>
+    <div class="fs"><div class="fs-icon">📡</div><div class="fs-label">Live Quarta</div><div class="fs-dot" style="background:var(--a-grav)"></div></div>
+  </div>
+</div>
+
+<!-- AREA TABS -->
+<div class="atabs" id="atabs"></div>
+
+<!-- TOOLBAR -->
+<div class="tbar">
+  <div class="fgrp">
+    <button class="fb on" onclick="setF('todos',this)">Todos</button>
+    <button class="fb" onclick="setF('p1',this)">🔴 Prioridade 1</button>
+    <button class="fb" onclick="setF('p2',this)">🟡 Prioridade 2</button>
+    <button class="fb" onclick="setF('p3',this)">🔵 Prioridade 3</button>
+    <button class="fb" onclick="setF('bloq',this)">❌ Bloqueadas</button>
+    <button class="fb" onclick="setF('voce',this)">Você</button>
+    <button class="fb" onclick="setF('renan',this)">Renan</button>
+    <button class="fb" onclick="setF('will',this)">Will</button>
+    <button class="fb" onclick="setF('maycon',this)">Maycon</button>
+    <button class="fb" onclick="setF('hilarry',this)">Hilarry</button>
+  </div>
+  <button class="add-btn" onclick="openM()">+ Nova tarefa</button>
+</div>
+
+<!-- LEGEND -->
+<div class="leg">
+  <span style="font-size:9px;font-weight:700;color:var(--mu)">STATUS:</span>
+  <div class="li"><div class="ld" style="background:var(--s0)"></div>Backlog</div>
+  <div class="li"><div class="ld" style="background:var(--s1)"></div>Em Produção</div>
+  <div class="li"><div class="ld" style="background:var(--s2)"></div>Em Revisão</div>
+  <div class="li"><div class="ld" style="background:var(--s3)"></div>Reprovado</div>
+  <div class="li"><div class="ld" style="background:var(--s4)"></div>Aprovado</div>
+  <div class="li"><div class="ld" style="background:var(--s5)"></div>Finalizado</div>
+  <div class="leg-div"></div>
+  <span style="font-size:9px;font-weight:700;color:var(--mu)">PRIORIDADE:</span>
+  <div class="li"><div class="ld" style="background:var(--p1)"></div>P1 — Crítico</div>
+  <div class="li"><div class="ld" style="background:var(--p2)"></div>P2 — Importante</div>
+  <div class="li"><div class="ld" style="background:var(--p3)"></div>P3 — Necessário</div>
+  <div class="li"><div class="ld" style="background:var(--p4)"></div>P4 — Escala</div>
+</div>
+
+<!-- BOARD -->
+<div class="bwrap" id="bwrap">
+  <div class="board" id="board"></div>
+</div>
+
+<!-- FUNIL VIEW -->
+<div class="funil-view" id="fv">
+  <div class="fv-title">Mapa do Funil — Ponta a Ponta</div>
+  <div class="fv-sub">Cada etapa mostra o que precisa estar pronto e quem é responsável</div>
+  <div class="fv-steps" id="fv-steps"></div>
+</div>
+
+<!-- MODAL -->
+<div class="mov" id="mov" onclick="closeOv(event)">
+  <div class="modal">
+    <button class="mx" onclick="closeM()">✕</button>
+    <h2>Nova Tarefa</h2>
+    <p>Preencha o briefing — sem campo em branco obrigatório vazio.</p>
+    <div class="fl2"><div class="fl2-l">Título *</div><input class="fi" id="ft" placeholder="Título claro e específico"></div>
+    <div class="fgrid">
+      <div class="fl2"><div class="fl2-l">Área *</div>
+        <select class="fsel" id="fa">
+          <option value="copy">✍️ Copy</option>
+          <option value="gravacao">🎥 Gravação</option>
+          <option value="edicao">🎬 Edição</option>
+          <option value="criativos">🎨 Criativos</option>
+          <option value="paginas">🌐 Páginas</option>
+          <option value="automacao">🤖 Automação</option>
+          <option value="trafego">📢 Tráfego</option>
+          <option value="configuracao">⚙️ Configuração</option>
+          <option value="sdr">🎯 SDR</option>
+          <option value="geral">🔧 Geral</option>
+        </select>
+      </div>
+      <div class="fl2"><div class="fl2-l">Responsável *</div>
+        <select class="fsel" id="fw">
+          <option value="voce">Você</option>
+          <option value="renan">Renan</option>
+          <option value="will">Will</option>
+          <option value="hilarry">Hilarry</option>
+          <option value="maycon">Maycon</option>
+          <option value="tbd">A definir</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgrid">
+      <div class="fl2"><div class="fl2-l">Prioridade *</div>
+        <select class="fsel" id="fp">
+          <option value="p1">🔴 P1 — Crítico</option>
+          <option value="p2">🟡 P2 — Importante</option>
+          <option value="p3">🔵 P3 — Necessário</option>
+          <option value="p4">🟢 P4 — Escala</option>
+        </select>
+      </div>
+      <div class="fl2"><div class="fl2-l">Prazo / Horário</div><input class="fi" id="fh" placeholder="Ex: Dia 1 – até 14h"></div>
+    </div>
+    <div class="fl2"><div class="fl2-l">Depende de</div><input class="fi" id="fd" placeholder="ID ou nome das tarefas dependentes"></div>
+    <div class="fl2"><div class="fl2-l">Etapa do funil</div>
+      <select class="fsel" id="ff">
+        <option value="">— Selecione —</option>
+        <option value="ads">Ads / Tráfego</option>
+        <option value="webinario">Webinário Gravado</option>
+        <option value="pag-vendas">Página de Vendas</option>
+        <option value="checkout">Checkout / Zouit</option>
+        <option value="pos-compra">Pós-Compra / Obrigado</option>
+        <option value="grupo">Grupo WhatsApp</option>
+        <option value="x1">WhatsApp X1</option>
+        <option value="membros">Área de Membros</option>
+        <option value="live">Live Semanal</option>
+        <option value="captacao">Captação / ManyChat</option>
+      </select>
+    </div>
+    <div class="fl2"><div class="fl2-l">Descrição</div><textarea class="fta" id="fde" placeholder="O que deve ser feito..."></textarea></div>
+    <div class="fl2"><div class="fl2-l">Checklist (uma linha por etapa)</div><textarea class="fta" id="fck" placeholder="Etapa 1&#10;Etapa 2"></textarea></div>
+    <div class="fl2"><div class="fl2-l">Critério de aprovação *</div><input class="fi" id="fcr" placeholder="O que define que está pronto?"></div>
+    <button class="msub" onclick="createT()">Criar no Backlog</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════ AREAS ═══════════════════════
+const AREAS=[
+  {id:'todos',    icon:'🗂',  label:'Todas',        color:'var(--mu)'},
+  {id:'copy',     icon:'✍️', label:'Copy',          color:'var(--a-copy)'},
+  {id:'gravacao', icon:'🎥', label:'Gravação',      color:'var(--a-grav)'},
+  {id:'edicao',   icon:'🎬', label:'Edição',        color:'var(--a-edit)'},
+  {id:'criativos',icon:'🎨', label:'Criativos',     color:'var(--a-cria)'},
+  {id:'paginas',  icon:'🌐', label:'Páginas',       color:'var(--a-pag)'},
+  {id:'automacao',icon:'🤖', label:'Automação',     color:'var(--a-auto)'},
+  {id:'trafego',  icon:'📢', label:'Tráfego',       color:'var(--a-traf)'},
+  {id:'configuracao',icon:'⚙️',label:'Configuração',color:'var(--a-conf)'},
+  {id:'sdr',      icon:'🎯', label:'SDR',           color:'var(--a-sdr)'},
+  {id:'geral',    icon:'🔧', label:'Geral',         color:'var(--a-ger)'},
+];
+
+const STATUS=[
+  {id:'backlog',   lbl:'📝 Backlog',      cls:'c-bl',fl:'fl-0'},
+  {id:'producao',  lbl:'🚧 Em Produção',  cls:'c-pr',fl:'fl-1'},
+  {id:'revisao',   lbl:'👀 Em Revisão',   cls:'c-rv',fl:'fl-2'},
+  {id:'reprovado', lbl:'❌ Reprovado',    cls:'c-rp',fl:'fl-3'},
+  {id:'aprovado',  lbl:'✅ Aprovado',     cls:'c-ap',fl:'fl-4'},
+  {id:'finalizado',lbl:'🚀 Finalizado',   cls:'c-fn',fl:'fl-5'},
+];
+const SORD=['backlog','producao','revisao','reprovado','aprovado','finalizado'];
+
+// ═══════════════════════ TAREFAS ═══════════════════════
+let tasks=[
+
+// ─── COPY ───
+{id:'cp1',area:'copy',status:'backlog',pri:'p1',hora:'Dia 1 — manhã',who:'voce',dep:'',funil:'ads',
+ title:'Escrever copy dos 3 criativos de captação (C1, C2, venda)',
+ desc:'Copy para os 3 formatos de criativo: C1 (conteúdo/consciência), C2 (engajamento/prova) e criativo de venda direta. Hook + corpo + CTA para cada.',
+ chk:['C1: hook de conteúdo + valor + CTA para comentar','C2: hook de prova/resultado + CTA para comentar','Criativo de venda: dor + mecanismo + oferta + CTA para página de vendas','Revisar em voz alta — soa natural?'],
+ crit:'3 copies distintas com hook, corpo e CTA. Cada uma com ângulo diferente. Prontas para gravar.'},
+
+{id:'cp2',area:'copy',status:'backlog',pri:'p1',hora:'Dia 1 — tarde',who:'voce',dep:'',funil:'webinario',
+ title:'Escrever roteiro completo do webinário evergreen',
+ desc:'Roteiro do webinário gravado: gancho nos 3 primeiros minutos, problema, mecanismo, prova, oferta e CTA para a página de vendas.',
+ chk:['Gancho: por que você DEVE assistir isso agora (3 min)','Problema: agitação da dor do avatar','Mecanismo: como funciona a live semanal','Prova: resultados ou lógica do método','Oferta: o que é o ingresso, o que inclui, preço','CTA direto para a página de vendas'],
+ crit:'Roteiro com as 5 partes preenchidas. Tom natural, sem "enrolação". Leitura em voz alta fluida.'},
+
+{id:'cp3',area:'copy',status:'backlog',pri:'p1',hora:'Dia 1 — noite',who:'voce',dep:'',funil:'pag-vendas',
+ title:'Escrever copy completa da página de vendas',
+ desc:'Página de vendas do ingresso: headline, subheadline, problema, mecanismo, prova, oferta, bônus, garantia, FAQ e CTA.',
+ chk:['Headline: a promessa mais forte em 1 linha','Subheadline: o mecanismo ou diferencial','Seção do problema: agitação da dor','Seção do mecanismo: como a live semanal funciona','Prova: depoimentos, resultados ou lógica','Oferta: o que inclui o ingresso','FAQ: 5 objeções mais comuns respondidas','CTA final com urgência/escassez'],
+ crit:'Copy completa, todas as seções preenchidas. Sem buracos de lógica. Entregue para Will.'},
+
+{id:'cp4',area:'copy',status:'backlog',pri:'p1',hora:'Dia 1 — noite',who:'voce',dep:'',funil:'pos-compra',
+ title:'Escrever copy da página de obrigado pós-compra',
+ desc:'Página que aparece após o checkout. Confirma a compra, entrega o link do grupo WhatsApp e instrui os próximos passos.',
+ chk:['Confirmação da compra: parabéns + o que acabou de adquirir','Link para entrar no grupo WhatsApp VIP','Instrução: acessar área de membros (2 vídeos importantes)','Lembrar data e hora da live semanal (toda quarta)','CTA para seguir nas redes'],
+ crit:'Página clara com link do grupo, acesso à área de membros e data da live. Sem erros.'},
+
+{id:'cp5',area:'copy',status:'backlog',pri:'p2',hora:'Dia 2',who:'voce',dep:'',funil:'captacao',
+ title:'Escrever copies das mensagens do grupo WhatsApp (leads)',
+ desc:'Sequência de mensagens para o grupo de leads (antes da compra): aquecimento, conteúdo de valor, convite para o webinário e CTA de venda.',
+ chk:['Mensagem de boas-vindas ao grupo','Mensagem de conteúdo de valor (dia 1)','Mensagem de convite para o webinário','Mensagem de prova/depoimento','Mensagem de oferta com CTA direto','Mensagem de urgência/fechamento'],
+ crit:'6 mensagens escritas, com tom consistente e progressão lógica de consciência para decisão.'},
+
+{id:'cp6',area:'copy',status:'backlog',pri:'p2',hora:'Dia 2',who:'voce',dep:'',funil:'x1',
+ title:'Escrever template de mensagem X1 para comprador (WhatsApp API)',
+ desc:'Mensagem automática no privado para quem comprou o ingresso. Tom pessoal, confirma a compra e instrui o próximo passo.',
+ chk:['Cumprimento pessoal (nome dinâmico se possível)','Confirmação da compra','Link do grupo VIP','Instruções: área de membros + live toda quarta','CTA para responder se tiver dúvida'],
+ crit:'Mensagem aprovada, tom pessoal e claro. Entregue para Renan integrar na API.'},
+
+{id:'cp7',area:'copy',status:'backlog',pri:'p2',hora:'Dia 2',who:'voce',dep:'',funil:'captacao',
+ title:'Escrever copy do funil ManyChat (comentou no vídeo)',
+ desc:'Sequência DM automática para quem comentar a palavra-chave no vídeo. Deve levar ao webinário ou à página de vendas.',
+ chk:['Mensagem 1: resposta imediata ao comentário + link do webinário','Mensagem 2 (24h): follow-up se não assistiu','Mensagem 3 (48h): CTA direto para página de vendas','Tom: casual, direto, sem spam'],
+ crit:'Sequência de 3 mensagens aprovadas. Tom correto. Entregue para Renan configurar.'},
+
+{id:'cp8',area:'copy',status:'backlog',pri:'p3',hora:'Dia 3',who:'voce',dep:'',funil:'captacao',
+ title:'Escrever copy do formulário de pesquisa (YasForms)',
+ desc:'Formulário de pesquisa para qualificar leads antes do webinário ou pós-webinário.',
+ chk:['Título do formulário: claro e com promessa','3–5 perguntas de qualificação','Pergunta sobre dor principal','Pergunta sobre orçamento/investimento','Mensagem de obrigado após envio'],
+ crit:'Formulário com 3–5 perguntas claras. Sem perguntas desnecessárias. Entregue para Will configurar.'},
+
+// ─── GRAVAÇÃO ───
+{id:'gv1',area:'gravacao',status:'backlog',pri:'p1',hora:'Dia 2 — manhã',who:'voce',dep:'cp1',funil:'captacao',
+ title:'Gravar criativo C1 — conteúdo/consciência',
+ desc:'Criativo de conteúdo que gera consciência do problema. Hook forte, entrega valor e CTA para comentar a palavra-chave.',
+ chk:['Setup: iluminação, áudio e enquadramento testados','Gravar hook: primeiros 3 segundos param o scroll','Entregar conteúdo de valor em 60–90s','CTA claro: "Comente X nos comentários"','Mínimo 2 tomadas'],
+ crit:'2 tomadas gravadas, mínimo 60s, áudio limpo, CTA com palavra-chave clara.'},
+
+{id:'gv2',area:'gravacao',status:'backlog',pri:'p1',hora:'Dia 2 — manhã',who:'voce',dep:'cp1',funil:'captacao',
+ title:'Gravar criativo C2 — prova/engajamento',
+ desc:'Criativo com prova ou resultado que gera engajamento. CTA para comentar e receber acesso ao webinário.',
+ chk:['Formato: depoimento, bastidor ou resultado real','Hook com dado ou afirmação surpreendente','60–90s, tom conversacional','CTA: "Comente X para receber o acesso"'],
+ crit:'Criativo gravado com prova real ou lógica convincente. CTA com palavra-chave.'},
+
+{id:'gv3',area:'gravacao',status:'backlog',pri:'p1',hora:'Dia 2 — tarde',who:'voce',dep:'cp1',funil:'ads',
+ title:'Gravar criativo de venda/captação direto',
+ desc:'Criativo de anúncio direto para venda ou captação. Hook de dor, mecanismo rápido, CTA para página de vendas ou webinário.',
+ chk:['Hook: dor ou problema específico do avatar','Mecanismo: o que é e como funciona o ingresso','CTA direto: "Acesse o link"','60–90s, formato vertical e horizontal'],
+ crit:'Criativo gravado com hook, mecanismo e CTA. Pronto para editar e subir.'},
+
+{id:'gv4',area:'gravacao',status:'backlog',pri:'p1',hora:'Dia 2 — tarde',who:'voce',dep:'cp2',funil:'webinario',
+ title:'Gravar webinário evergreen completo',
+ desc:'Gravar do início ao fim. Uma tomada sem parar. Enviar bruto para Maycon imediatamente. Velocidade > perfeição.',
+ chk:['Roteiro revisado antes de gravar','Setup: luz, áudio e câmera testados','Gravar do início ao fim sem parar','Errou? Continua — editor cuida','Arquivo enviado para Maycon no mesmo momento','Briefing de edição enviado junto'],
+ crit:'Arquivo bruto entregue para Maycon. Duração mínima 30 min. Áudio limpo. CTA final claro.'},
+
+{id:'gv5',area:'gravacao',status:'backlog',pri:'p2',hora:'Dia 3',who:'voce',dep:'',funil:'membros',
+ title:'Gravar vídeo de boas-vindas da área de membros (Vídeo 1)',
+ desc:'Primeiro vídeo da área de membros. Eleva nível de consciência do comprador. "Você fez a escolha certa — veja o que vem por aí."',
+ chk:['Tom: celebração + direcionamento','Apresentar o que o comprador recebe','Explicar a dinâmica da live semanal toda quarta','CTA: acessar vídeo 2 + entrar no grupo'],
+ crit:'Vídeo gravado, tom de boas-vindas, máximo 10 min. Claro sobre os próximos passos.'},
+
+{id:'gv6',area:'gravacao',status:'backlog',pri:'p2',hora:'Dia 3',who:'voce',dep:'gv5',funil:'membros',
+ title:'Gravar vídeo de elevação de consciência (Vídeo 2)',
+ desc:'Segundo vídeo da área de membros. Eleva o nível de consciência do comprador sobre o método e o que vai transformar na live.',
+ chk:['Conteúdo de alto valor — por que o método funciona','Conexão emocional: por que você criou isso','Preparar o comprador para aproveitar as lives','CTA: aparecer na live toda quarta'],
+ crit:'Vídeo gravado com conteúdo de alto valor. Máximo 20 min. Eleva comprometimento do comprador.'},
+
+// ─── EDIÇÃO ───
+{id:'ed1',area:'edicao',status:'backlog',pri:'p1',hora:'Dia 3 — até 12h',who:'maycon',dep:'gv4',funil:'webinario',
+ title:'Editar webinário evergreen',
+ desc:'Cortes, silêncios, intro (5s), CTA animado no final. Exportar MP4 1080p para subir no HotWebinar.',
+ chk:['Corte no início e final','Retirar silêncios acima de 3s','Intro simples: nome + tema (5s)','CTA animado no final com texto e seta','Exportar MP4 1080p 30fps','Entregar na pasta compartilhada até 12h'],
+ crit:'Webinário editado. Intro e CTA presentes. MP4 1080p entregue até 12h do dia 3.'},
+
+{id:'ed2',area:'edicao',status:'backlog',pri:'p1',hora:'Dia 3 — até 16h',who:'maycon',dep:'gv1,gv2,gv3',funil:'ads',
+ title:'Editar os 3 criativos de vídeo — todos os formatos',
+ desc:'Editar C1, C2 e criativo de venda. Legendas TikTok, hook visual, CTA. Exportar 9:16, 4:5 e 16:9.',
+ chk:['C1: cortes + legendas + hook visual 3s + CTA','C2: mesmo padrão','Criativo de venda: mesmo padrão','Exportar cada um em 9:16, 4:5 e 16:9','Entregar em pasta separada por criativo'],
+ crit:'9 arquivos entregues (3 criativos × 3 formatos). Legenda, hook e CTA presentes em todos.'},
+
+{id:'ed3',area:'edicao',status:'backlog',pri:'p2',hora:'Dia 4',who:'maycon',dep:'gv5,gv6',funil:'membros',
+ title:'Editar vídeos da área de membros (Vídeo 1 e 2)',
+ desc:'Edição limpa, sem efeitos. Cortes, capítulos se necessário, thumbnail para cada vídeo.',
+ chk:['Cortes e silêncios','Adicionar capítulos se acima de 10 min','Criar thumbnail para cada vídeo','Exportar MP4 1080p'],
+ crit:'2 vídeos editados com thumbnail. Exportados em 1080p. Entregues para subir na área de membros.'},
+
+// ─── CRIATIVOS ───
+{id:'cr1',area:'criativos',status:'backlog',pri:'p1',hora:'Dia 2 — manhã',who:'voce',dep:'cp1',funil:'ads',
+ title:'Criar criativos estáticos com IA — anúncios de captação',
+ desc:'Gerar 6–8 criativos estáticos com IA para testar em paralelo com os vídeos. Formatos: problema, solução, prova, número, curiosidade.',
+ chk:['Gerar criativo: headline de dor + visual impactante','Gerar criativo: número ou dado de resultado','Gerar criativo: curiosidade/método','Gerar criativo: prova social ou depoimento','Testar no mínimo 2 estilos visuais diferentes','Exportar em 1:1, 4:5 e 9:16'],
+ crit:'6 criativos estáticos prontos nos 3 formatos. Salvos em pasta organizada por ângulo.'},
+
+{id:'cr2',area:'criativos',status:'backlog',pri:'p2',hora:'Dia 3',who:'voce',dep:'cr1',funil:'ads',
+ title:'Criar criativos IA de remarketing (quem visitou a página)',
+ desc:'Criativos específicos para remarketing de visitantes da página de vendas que não compraram.',
+ chk:['Ângulo: "Você viu mas ainda não garantiu seu ingresso"','Ângulo: urgência/escassez','Ângulo: objeção mais comum respondida visualmente','Exportar em 1:1, 4:5, 9:16'],
+ crit:'3 criativos de remarketing prontos nos formatos. Distintos dos criativos de topo de funil.'},
+
+// ─── PÁGINAS ───
+{id:'pg1',area:'paginas',status:'backlog',pri:'p1',hora:'Dia 2 — até 16h',who:'will',dep:'cp3',funil:'pag-vendas',
+ title:'Montar página de vendas do ingresso',
+ desc:'Recebe a copy pronta. Montar página de vendas completa: headline, seções, prova, oferta, FAQ, CTA e checkout integrado.',
+ chk:['Receber copy completa antes de começar','Montar estrutura: hero, problema, mecanismo, prova, oferta','Adicionar botões de CTA em 3 pontos da página','Integrar com checkout da Zouit','Testar responsividade mobile','Enviar link para aprovação'],
+ crit:'Página no ar, checkout integrado, mobile responsivo. Link enviado para aprovação até 16h.'},
+
+{id:'pg2',area:'paginas',status:'backlog',pri:'p1',hora:'Dia 2 — até 17h',who:'will',dep:'cp4',funil:'pos-compra',
+ title:'Montar página de obrigado pós-compra',
+ desc:'Página que aparece após o checkout ser concluído. Link do grupo, acesso à área de membros, instruções claras.',
+ chk:['Headline de confirmação da compra','Link para entrar no grupo WhatsApp','Botão/link para área de membros','Lembrar data/hora da live (toda quarta)','Testar mobile','Confirmar que Zouit redireciona para essa página'],
+ crit:'Página no ar com link do grupo e instruções claras. Zouit redireciona corretamente após compra.'},
+
+// ─── AUTOMAÇÃO ───
+{id:'au1',area:'automacao',status:'backlog',pri:'p1',hora:'Dia 2 — até 17h',who:'renan',dep:'cp7',funil:'captacao',
+ title:'Configurar funil ManyChat — comentou no vídeo → DM',
+ desc:'Trigger: comentar palavra-chave específica no vídeo. Resposta automática via DM com link do webinário.',
+ chk:['Definir palavra-chave com gestor (ex: "QUERO", "ACESSO")','Criar trigger de comentário no Instagram/Facebook','Mensagem 1 imediata: link do webinário','Mensagem 2 (24h): follow-up se não clicou','Mensagem 3 (48h): CTA para página de vendas','Testar comentando a palavra-chave','Confirmar que a DM chega em até 1 minuto'],
+ crit:'Fluxo ativo. Comentário dispara DM em até 1 minuto. 3 mensagens na sequência funcionando.'},
+
+{id:'au2',area:'automacao',status:'backlog',pri:'p1',hora:'Dia 3 — até 12h',who:'renan',dep:'cp6',funil:'x1',
+ title:'Configurar WhatsApp API oficial — mensagem X1 para comprador',
+ desc:'Mensagem automática no privado do WhatsApp para quem compra o ingresso. Integração com Zouit via webhook.',
+ chk:['Configurar número de WhatsApp Business com API oficial','Criar template de mensagem aprovado pela Meta','Integrar com Zouit via webhook (dispara após compra confirmada)','Testar fluxo completo: compra → webhook → mensagem','Garantir que a mensagem chega em até 5 minutos após a compra'],
+ crit:'Mensagem enviada automaticamente após compra. Teste real realizado. Tempo < 5 min.'},
+
+{id:'au3',area:'automacao',status:'backlog',pri:'p1',hora:'Dia 3 — até 14h',who:'renan',dep:'au2',funil:'grupo',
+ title:'Criar e configurar grupo WhatsApp VIP — compradores',
+ desc:'Grupo exclusivo para quem comprou o ingresso. Link de acesso na página de obrigado e mensagem X1.',
+ chk:['Criar grupo com nome profissional','Configurar mensagem de boas-vindas automática (via bot ou manual)','Criar link de convite fixo','Inserir o link na página de obrigado (Will) e mensagem X1 (Renan)','Definir regras do grupo: horário de posts, quem pode enviar'],
+ crit:'Grupo criado com link fixo. Mensagem de boas-vindas funcionando. Link inserido na pág. obrigado e X1.'},
+
+{id:'au4',area:'automacao',status:'backlog',pri:'p2',hora:'Dia 3',who:'renan',dep:'cp5',funil:'captacao',
+ title:'Criar e configurar grupo WhatsApp de leads (pré-compra)',
+ desc:'Grupo para aquecer leads antes da compra. Sequência de mensagens de valor + convite para webinário + CTA de venda.',
+ chk:['Criar grupo com nome atrativo (sem "grupo de vendas")','Configurar mensagem de entrada automática','Programar ou criar roteiro das mensagens de aquecimento','Link do grupo disponível para ManyChat e SDR','Testar entrada e recebimento de mensagens'],
+ crit:'Grupo criado. Mensagem de boas-vindas ativa. Roteiro de mensagens entregue para o gestor.'},
+
+{id:'au5',area:'automacao',status:'backlog',pri:'p2',hora:'Dia 3 — até 16h',who:'renan',dep:'au1',funil:'captacao',
+ title:'Integrar ManyChat com grupo WhatsApp de leads',
+ desc:'Quem passa pelo funil ManyChat (comentou no vídeo) recebe o link do grupo de leads após assistir o webinário.',
+ chk:['Após mensagem 2 do ManyChat: enviar link do grupo de leads','Condicionar: só envia o link se o lead não comprou ainda','Testar fluxo completo: comentário → DM → webinário → grupo'],
+ crit:'Lead que não comprou após webinário recebe link do grupo automaticamente.'},
+
+// ─── TRÁFEGO ───
+{id:'tr1',area:'trafego',status:'backlog',pri:'p1',hora:'Dia 3 — manhã',who:'voce',dep:'pg1,ed2,cr1',funil:'ads',
+ title:'Criar campanha de captação no Ads Manager',
+ desc:'Campanha com objetivo Leads ou Conversão. 3 conjuntos: tráfego frio (interesses), LAL e remarketing.',
+ chk:['Objetivo: Conversão (evento Lead ou Purchase)','Conjunto 1: interesses do avatar','Conjunto 2: lookalike de compradores ou engajados','Conjunto 3: remarketing de visitantes da página de vendas','Budget inicial: R$50–80/dia por conjunto','Nomenclatura clara: [público]_[criativo]_[data]'],
+ crit:'3 conjuntos criados, budget definido. Campanha pronta para subir criativos.'},
+
+{id:'tr2',area:'trafego',status:'backlog',pri:'p1',hora:'Dia 3 — manhã',who:'voce',dep:'tr1',funil:'ads',
+ title:'Subir criativos nos conjuntos e ativar campanha',
+ desc:'1 criativo por conjunto no início. Vídeos editados + criativos IA. Ativar e registrar hora de início.',
+ chk:['Subir vídeo C1 no conjunto de interesses','Subir criativo IA no conjunto LAL','Subir criativo de remarketing no conjunto de remarketing','Confirmar que pixel está disparando (Pixel Helper)','Ativar campanha e registrar hora'],
+ crit:'Campanha ativa. Pixel disparando. Hora de início registrada.'},
+
+{id:'tr3',area:'trafego',status:'backlog',pri:'p1',hora:'Dia 3 — tarde',who:'voce',dep:'tr2',funil:'ads',
+ title:'Monitorar métricas após 4h — pausar o que não performa',
+ desc:'Analisar CPL, CTR e conversão. Pausar conjuntos com CPL acima do alvo. Escalar o que funciona.',
+ chk:['CPL (custo por lead) alvo: <R$35','CTR alvo: >1,5%','Taxa de conversão da página: >25%','Pausar conjuntos com CPL acima de R$50','Registrar insights no Notion'],
+ crit:'Análise feita. Conjunto vencedor identificado. Conjuntos ruins pausados.'},
+
+// ─── CONFIGURAÇÃO ───
+{id:'cf1',area:'configuracao',status:'backlog',pri:'p1',hora:'Dia 1 — até 18h',who:'will',dep:'',funil:'checkout',
+ title:'Configurar produto e checkout na Zouit',
+ desc:'Criar produto "Ingresso Live Semanal", configurar checkout, página de obrigado e recuperação de vendas.',
+ chk:['Criar produto: nome, descrição, preço','Configurar checkout com campos obrigatórios','Configurar página de obrigado (redireciona para pg. obrigado de Will)','Ativar recuperação de vendas (boleto/pix pendente)','Configurar webhook para WhatsApp API (Renan)','Testar fluxo completo de compra (modo teste)'],
+ crit:'Checkout no ar. Fluxo de compra testado. Recuperação de vendas ativa. Webhook configurado.'},
+
+{id:'cf2',area:'configuracao',status:'backlog',pri:'p1',hora:'Dia 2 — até 14h',who:'will',dep:'ed1',funil:'webinario',
+ title:'Configurar HotWebinar com webinário editado',
+ desc:'Subir o webinário editado no HotWebinar. Configurar agendamentos, página de registro e automações.',
+ chk:['Subir MP4 do webinário editado','Configurar agendamentos (evergreen — múltiplos horários)','Configurar página de registro dentro do HotWebinar','Ativar e-mail/notificação automática de lembrete','Integrar com ManyChat ou página de captura','Testar inscrição e acesso ao webinário'],
+ crit:'Webinário no ar no HotWebinar. Inscrição funcionando. Lembrete automático configurado.'},
+
+{id:'cf3',area:'configuracao',status:'backlog',pri:'p1',hora:'Dia 2 — até 16h',who:'will',dep:'pg1',funil:'pag-vendas',
+ title:'Instalar e configurar Server Side (CAPI) + pixel client side',
+ desc:'Pixel client side E server side (CAPI) para garantir rastreamento máximo com iOS 14+.',
+ chk:['Instalar pixel client side na página de vendas e obrigado','Configurar CAPI (Conversions API) via servidor','Testar com Facebook Pixel Helper + Events Manager','Confirmar eventos: PageView, Lead, Purchase','Evitar duplicação: configurar deduplication'],
+ crit:'Pixel Helper mostra eventos corretos. Events Manager confirma CAPI funcionando. Sem duplicação.'},
+
+{id:'cf4',area:'configuracao',status:'backlog',pri:'p2',hora:'Dia 2 — até 17h',who:'will',dep:'cp8',funil:'captacao',
+ title:'Configurar YasForms — formulário de pesquisa',
+ desc:'Montar formulário de pesquisa/qualificação no YasForms com a copy entregue. Integrar com ManyChat ou página.',
+ chk:['Receber copy das perguntas','Criar formulário no YasForms','Configurar mensagem de obrigado após envio','Integrar link do formulário no fluxo de captação','Testar envio e recebimento das respostas'],
+ crit:'Formulário no ar, respostas chegando, integração com captação funcionando.'},
+
+{id:'cf5',area:'configuracao',status:'backlog',pri:'p2',hora:'Dia 3',who:'will',dep:'',funil:'membros',
+ title:'Configurar área de membros — subir 2 vídeos de consciência',
+ desc:'Criar área de membros (plataforma a definir). Subir os 2 vídeos editados por Maycon. Configurar acesso automático para compradores.',
+ chk:['Criar produto/curso na plataforma de membros','Subir Vídeo 1 (boas-vindas) e Vídeo 2 (consciência)','Configurar acesso automático integrado ao Zouit','Testar fluxo: compra → acesso automático à área','Criar página de acesso para o comprador'],
+ crit:'Área de membros no ar. 2 vídeos publicados. Comprador recebe acesso automaticamente após compra.'},
+
+// ─── SDR ───
+{id:'sd1',area:'sdr',status:'backlog',pri:'p2',hora:'Dia 2 — noite',who:'hilarry',dep:'',funil:'captacao',
+ title:'Receber e dominar o script de qualificação',
+ desc:'Ler, entender e simular o script completo com o gestor antes de começar as abordagens.',
+ chk:['Receber script do gestor','Ler e entender fluxo completo','Simular abordagem com o gestor','Tirar dúvidas sobre objeções','Confirmar critério de qualificação e agenda'],
+ crit:'Hilarry confirma entendimento. Simulação aprovada. Sem dúvidas em aberto.'},
+
+{id:'sd2',area:'sdr',status:'backlog',pri:'p2',hora:'Dia 3 — tarde',who:'hilarry',dep:'sd1,au1',funil:'captacao',
+ title:'Iniciar abordagem de leads — meta: 2–3 calls/dia',
+ desc:'Abordar leads do grupo e ManyChat. Qualificar e agendar calls de fechamento com o gestor.',
+ chk:['Acessar leads do grupo WhatsApp e ManyChat','Abordar via WhatsApp com script','Qualificar: tem interesse? Tem condição?','Agendar call com gestor se qualificado','Registrar status de cada lead na planilha'],
+ crit:'Mínimo 2 calls qualificadas agendadas com o gestor no dia 3.'},
+
+{id:'sd3',area:'sdr',status:'backlog',pri:'p3',hora:'Dia 4+',who:'hilarry',dep:'sd2',funil:'captacao',
+ title:'Follow-up e escala para 5+ calls/dia',
+ desc:'Retomar leads inativos e escalar volume de abordagens na semana 2.',
+ chk:['Follow-up com leads sem resposta (24h e 48h)','Após 3 tentativas: cold list','Escalar para 5+ calls qualificadas por dia','Reportar diariamente: contatos, qualificados, agendados'],
+ crit:'5 calls qualificadas agendadas por dia de forma consistente.'},
+
+// ─── GERAL ───
+{id:'ge1',area:'geral',status:'backlog',pri:'p1',hora:'Dia 1 — noite',who:'voce',dep:'gv4',funil:'webinario',
+ title:'Briefar Maycon (edição), Will (páginas/config) e Renan (automação)',
+ desc:'Enviar briefing completo para os 3 freelancers com o que precisa ser feito no dia 2.',
+ chk:['Briefing Maycon: webinário (prazo dia 3 12h) + criativos (dia 3 16h)','Briefing Will: página vendas (dia 2 16h) + obrigado (dia 2 17h) + Zouit (dia 1 18h) + HotWebinar (dia 2 14h) + CAPI (dia 2 16h)','Briefing Renan: ManyChat (dia 2 17h) + WhatsApp API (dia 3 12h) + grupos (dia 3 14h)','Confirmar recebimento de todos'],
+ crit:'3 freelancers confirmaram recebimento e entendimento. Sem dúvidas em aberto.'},
+
+{id:'ge2',area:'geral',status:'backlog',pri:'p1',hora:'Dia 3 — tarde',who:'voce',dep:'pg1,pg2,cf1,cf2,cf3,au1',funil:'checkout',
+ title:'Testar funil completo de ponta a ponta',
+ desc:'CRÍTICO. Testar todo o funil antes de subir tráfego. Do anúncio até a área de membros.',
+ chk:['Acessar URL da página de vendas','Clicar em CTA e ir ao checkout','Fazer compra teste no Zouit (modo teste)','Confirmar redirecionamento para pág. obrigado','Confirmar link do grupo na pág. obrigado','Confirmar recebimento da mensagem WhatsApp X1 (< 5 min)','Acessar área de membros — vídeos disponíveis?','Confirmar que pixel disparou Purchase no Events Manager'],
+ crit:'Fluxo completo testado sem erros. Cada etapa confirmada. Só sobe tráfego depois disso.'},
+
+{id:'ge3',area:'geral',status:'backlog',pri:'p1',hora:'Dia 3 — após 1º cliente',who:'voce',dep:'ge2',funil:'checkout',
+ title:'Primeiro cliente fechado — reinvestir 50% em tráfego',
+ desc:'Usar o primeiro fechamento para financiar a escala. Não tirar dinheiro antes de 5 clientes.',
+ chk:['Registrar valor do contrato','50% → verba de tráfego','Pagar freelancers com o restante','Escalar o criativo vencedor 20–30%','Atualizar projeção de meta no Notion'],
+ crit:'Verba reinvestida, freelancers pagos, campanha escalada no mesmo dia.'},
+];
+
+// ═══════════════════════ FUNIL STEPS ═══════════════════════
+const FUNIL_STEPS=[
+  {id:'ads',icon:'📢',title:'Ads — Tráfego',sub:'Facebook/Instagram Ads rodando com criativos testados',dep:'Criativos gravados e editados, pixel configurado (CAPI + client side), campanha criada no Ads Manager',color:'var(--a-traf)'},
+  {id:'captacao',icon:'🎯',title:'Captação Orgânica — ManyChat',sub:'Funil automático para quem comentar nos vídeos',dep:'Copy do funil, ManyChat configurado por Renan, palavra-chave definida',color:'var(--a-auto)'},
+  {id:'webinario',icon:'📺',title:'Webinário Evergreen',sub:'Webinário gravado rodando 24/7 no HotWebinar',dep:'Roteiro escrito, webinário gravado, Maycon edita, Will sobe no HotWebinar',color:'var(--a-grav)'},
+  {id:'pag-vendas',icon:'🌐',title:'Página de Vendas',sub:'Lead decide comprar e clica em CTA',dep:'Copy da página escrita, Will monta, CAPI + pixel instalado por Will',color:'var(--a-pag)'},
+  {id:'checkout',icon:'💳',title:'Checkout — Zouit',sub:'Pagamento processado, compra confirmada',dep:'Zouit configurado por Will, produto criado, recuperação de vendas ativa',color:'var(--a-conf)'},
+  {id:'pos-compra',icon:'✅',title:'Página de Obrigado',sub:'Comprador recebe acesso ao grupo e área de membros',dep:'Copy escrita, Will monta, link do grupo inserido, redirecionamento do Zouit configurado',color:'var(--a-pag)'},
+  {id:'grupo',icon:'💬',title:'Grupo WhatsApp VIP',sub:'Comprador entra no grupo exclusivo',dep:'Renan cria o grupo, link fixo gerado, mensagem de boas-vindas configurada',color:'var(--a-auto)'},
+  {id:'x1',icon:'📱',title:'WhatsApp X1 — API Oficial',sub:'Mensagem pessoal automática para o comprador',dep:'Copy escrita, Renan configura API + webhook com Zouit, template aprovado pela Meta',color:'var(--a-auto)'},
+  {id:'membros',icon:'🎓',title:'Área de Membros',sub:'2 vídeos de elevação de consciência disponíveis',dep:'Vídeos 1 e 2 gravados e editados por Maycon, Will configura a plataforma e o acesso automático',color:'var(--a-conf)'},
+  {id:'live',icon:'📡',title:'Live Semanal — Toda Quarta',sub:'Comprador participa da live ao vivo toda semana',dep:'Grupo WhatsApp VIP ativo, comprador onboardado, área de membros acessível',color:'var(--a-grav)'},
+];
+
+// ═══════════════════════ STATE ═══════════════════════
+let curArea='todos', curFilter='todos', curView='kanban';
+
+// ═══════════════════════ HELPERS ═══════════════════════
+const WM={voce:{c:'av-v',i:'V',n:'Você'},renan:{c:'av-r',i:'R',n:'Renan'},will:{c:'av-w',i:'W',n:'Will'},hilarry:{c:'av-h',i:'H',n:'Hilarry'},maycon:{c:'av-m',i:'M',n:'Maycon'},tbd:{c:'av-t',i:'?',n:'A definir'}};
+const PM={p1:{tc:'pt1',lbl:'P1 — Crítico',bc:'var(--p1)'},p2:{tc:'pt2',lbl:'P2 — Importante',bc:'var(--p2)'},p3:{tc:'pt3',lbl:'P3 — Necessário',bc:'var(--p3)'},p4:{tc:'pt4',lbl:'P4 — Escala',bc:'var(--p4)'}};
+const AC={copy:'var(--a-copy)',gravacao:'var(--a-grav)',edicao:'var(--a-edit)',criativos:'var(--a-cria)',paginas:'var(--a-pag)',automacao:'var(--a-auto)',trafego:'var(--a-traf)',configuracao:'var(--a-conf)',sdr:'var(--a-sdr)',geral:'var(--a-ger)'};
+
+function nextSt(cur){if(cur==='reprovado')return 'producao';const i=SORD.indexOf(cur);return i<SORD.length-1?SORD[i+1]:null;}
+
+function passes(t){
+  if(curArea!=='todos'&&t.area!==curArea)return false;
+  if(curFilter==='todos')return true;
+  if(curFilter==='bloq')return t.status==='reprovado';
+  if(['voce','renan','will','hilarry','maycon'].includes(curFilter))return t.who===curFilter;
+  return t.pri===curFilter;
+}
+
+function buildCard(t){
+  const w=WM[t.who]||WM.tbd, p=PM[t.pri]||PM.p3;
+  const s=STATUS.find(x=>x.id===t.status)||STATUS[0];
+  const fhtml=STATUS.map(st=>{const cur=st.id===t.status?' fl-cur':'';return`<span class="fl-s ${st.fl}${cur}">${st.lbl}</span>`;}).join('<span class="fl-arr">›</span>');
+  const chkhtml=(t.chk||[]).map(c=>`<li>${c}</li>`).join('');
+  const ns=nextSt(t.status);
+  const nso=ns?STATUS.find(x=>x.id===ns):null;
+  const advB=nso?`<button class="act adv" onclick="adv(event,'${t.id}')">Avançar → ${nso.lbl}</button>`:'';
+  const repB=t.status==='revisao'?`<button class="act rep" onclick="rep(event,'${t.id}')">Reprovar ❌</button>`:'';
+  const depH=t.dep?`<div class="dep-tag">⛓ dep: ${t.dep}</div>`:'';
+  const depInfo=t.dep?`<div class="dep-box">⚠️ Depende de: <strong>${t.dep}</strong>. Só inicie após aprovadas.</div>`:'';
+  const barColor=AC[t.area]||'var(--mu)';
+  return`<div class="card${t.status==='finalizado'?' done':''}" id="card-${t.id}" onclick="togCard('${t.id}')">
+  <div class="card-bar" style="background:${barColor}"></div>
+  <div class="card-top">
+    <div class="card-r1">
+      <span class="ptag ${p.tc}">${p.lbl}</span>
+      <div class="cbtn${t.status==='finalizado'?' ck':''}" onclick="togDone(event,'${t.id}')"><svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+    <div class="card-title">${t.title}</div>
+    <div class="card-ft">
+      <div class="av-wrap"><div class="av ${w.c}">${w.i}</div><span class="av-nm">${w.n}</span></div>
+      <span class="card-hora">${t.hora}</span>
+    </div>
+    ${depH}
+  </div>
+  <div class="det" id="det-${t.id}">
+    <div class="dl">Descrição</div><div class="dt">${t.desc}</div>
+    ${chkhtml?`<div class="dl">Checklist</div><ul class="chklist">${chkhtml}</ul>`:''}
+    <div class="dl">Critério de aprovação</div><div class="crit-box">${t.crit}</div>
+    ${depInfo}
+    <div class="dl">Fluxo de status</div><div class="flow">${fhtml}</div>
+    <div class="act-row">${advB}${repB}</div>
+  </div>
+</div>`;
+}
+
+// ═══════════════════════ RENDER ═══════════════════════
+function renderTabs(){
+  const el=document.getElementById('atabs');
+  el.innerHTML=AREAS.map(a=>{
+    const cnt=a.id==='todos'?tasks.filter(t=>passes({...t,area:t.area})).length:tasks.filter(t=>t.area===a.id).length;
+    const color=a.id==='todos'?'var(--mu)':AC[a.id]||'var(--mu)';
+    return`<button class="atab${curArea===a.id?' on':''}" onclick="setArea('${a.id}')" style="${curArea===a.id?`border-bottom-color:${color};color:${color}`:''}">
+      ${a.icon} ${a.label} <span class="ac">${cnt}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderBoard(){
+  const el=document.getElementById('board');
+  const filtered=tasks.filter(passes);
+  let html='';
+  STATUS.forEach(s=>{
+    const col=filtered.filter(t=>t.status===s.id);
+    const cards=col.length?col.map(buildCard).join(''):`<div class="col-empty">Vazio</div>`;
+    html+=`<div class="col ${s.cls}"><div class="col-hd"><span class="col-lbl">${s.lbl}</span><span class="col-cnt">${col.length}</span></div><div class="col-body">${cards}</div></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function renderFunilView(){
+  const el=document.getElementById('fv-steps');
+  el.innerHTML=FUNIL_STEPS.map((fs,i)=>{
+    const related=tasks.filter(t=>t.funil===fs.id);
+    const taskRows=related.map(t=>{
+      const w=WM[t.who]||WM.tbd;
+      const sc=t.status==='finalizado'?'background:#ddd6fe;color:var(--s5)':t.status==='aprovado'?'background:#bbf7d0;color:var(--s4)':t.status==='reprovado'?'background:#fecaca;color:var(--s3)':'background:#f5f4f0;color:var(--mu)';
+      return`<div class="fv-task-row"><div class="fv-task-dot" style="background:${AC[t.area]||'var(--mu)'}"></div><span class="fv-task-name">${t.title}</span><span class="fv-task-who">${w.n}</span><span class="fv-task-status" style="${sc}">${t.status}</span></div>`;
+    }).join('');
+    return`<div class="fv-step" id="fvs-${fs.id}">
+      <div class="fv-step-hd" onclick="togFv('${fs.id}')">
+        <div class="fv-num" style="background:${fs.color}">${i+1}</div>
+        <div class="fv-step-info">
+          <div class="fv-step-title">${fs.icon} ${fs.title}</div>
+          <div class="fv-step-sub">${fs.sub}</div>
+        </div>
+        <span style="font-size:11px;color:var(--mu);margin-left:8px;">${related.length} tarefas</span>
+      </div>
+      <div class="fv-step-body">
+        <div class="fv-dep">🔗 <strong>O que precisa estar pronto:</strong> ${fs.dep}</div>
+        <div style="height:8px;"></div>
+        ${taskRows||'<div style="font-size:11px;color:var(--mu2)">Nenhuma tarefa mapeada para esta etapa.</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeader(){
+  const tot=tasks.length, done=tasks.filter(t=>t.status==='finalizado').length;
+  const blk=tasks.filter(t=>t.status==='reprovado').length;
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('hs-t').textContent=tot;
+  document.getElementById('hs-d').textContent=done;
+  document.getElementById('hs-p').textContent=pct+'%';
+  document.getElementById('hs-b').textContent=blk;
+  document.getElementById('gp-f').style.width=pct+'%';
+  document.getElementById('gp-l').textContent=pct+'%';
+}
+
+function renderAll(){
+  renderHeader(); renderTabs();
+  if(curView==='kanban')renderBoard();
+  if(curView==='funil')renderFunilView();
+}
+
+// ═══════════════════════ INTERACTIONS ═══════════════════════
+function setArea(id){curArea=id;renderAll();}
+function setF(f,btn){curFilter=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderAll();}
+
+function switchView(v){
+  curView=v;
+  document.getElementById('bwrap').style.display=v==='kanban'?'block':'none';
+  document.getElementById('fv').classList.toggle('on',v==='funil');
+  document.querySelectorAll('.nav-view-btn').forEach(b=>b.classList.remove('on'));
+  renderAll();
+}
+
+function togCard(id){
+  const det=document.getElementById('det-'+id);
+  if(!det)return;
+  const open=det.style.display==='block';
+  document.querySelectorAll('.det').forEach(d=>d.style.display='none');
+  det.style.display=open?'none':'block';
+}
+function togFv(id){document.getElementById('fvs-'+id).classList.toggle('open');}
+function adv(e,id){e.stopPropagation();const t=tasks.find(x=>x.id===id);if(!t)return;const n=nextSt(t.status);if(n){t.status=n;renderAll();}}
+function rep(e,id){e.stopPropagation();const t=tasks.find(x=>x.id===id);if(t){t.status='reprovado';renderAll();}}
+function togDone(e,id){e.stopPropagation();const t=tasks.find(x=>x.id===id);if(!t)return;t.status=t.status==='finalizado'?'aprovado':'finalizado';renderAll();}
+
+// MODAL
+function openM(){document.getElementById('mov').classList.add('on');}
+function closeM(){document.getElementById('mov').classList.remove('on');}
+function closeOv(e){if(e.target===document.getElementById('mov'))closeM();}
+function createT(){
+  const tit=document.getElementById('ft').value.trim();
+  if(!tit){alert('Preencha o título.');return;}
+  const crit=document.getElementById('fcr').value.trim();
+  if(!crit){alert('Defina o critério de aprovação.');return;}
+  const chkRaw=document.getElementById('fck').value.trim();
+  const chk=chkRaw?chkRaw.split('\n').filter(c=>c.trim()):['Executar conforme descrito'];
+  const hora=document.getElementById('fh').value.trim();
+  tasks.push({
+    id:'u'+Date.now(),
+    area:document.getElementById('fa').value,
+    status:'backlog',
+    pri:document.getElementById('fp').value,
+    hora:hora||'A definir',
+    who:document.getElementById('fw').value,
+    dep:document.getElementById('fd').value.trim(),
+    funil:document.getElementById('ff').value,
+    title:tit,
+    desc:document.getElementById('fde').value.trim()||'Sem descrição.',
+    chk,crit,
+  });
+  ['ft','fh','fd','fde','fck','fcr'].forEach(id=>document.getElementById(id).value='');
+  closeM();renderAll();
+}
+
+// FUNIL VIEW toggle via nav
+document.querySelector('.atabs').insertAdjacentHTML('afterend','');
+
+// Add funil tab button to atabs
+window.addEventListener('DOMContentLoaded',()=>{
+  const tabs=document.getElementById('atabs');
+  const fBtn=document.createElement('button');
+  fBtn.className='atab';fBtn.style.marginLeft='auto';
+  fBtn.innerHTML='🗺 Mapa do Funil <span class="ac" id="ac-fv">'+FUNIL_STEPS.length+'</span>';
+  fBtn.onclick=()=>{
+    curView=curView==='funil'?'kanban':'funil';
+    document.getElementById('bwrap').style.display=curView==='kanban'?'block':'none';
+    document.getElementById('fv').classList.toggle('on',curView==='funil');
+    fBtn.classList.toggle('on',curView==='funil');
+    renderAll();
+  };
+  tabs.appendChild(fBtn);
+});
+
+renderAll();
+</script>
+</body>
+</html>
